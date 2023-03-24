@@ -1,0 +1,45 @@
+[submodule ".vim/bundle/material"]
+	path = .vim/bundle/material
+	url = https://github.com/kaicataldo/material.vim
+[submodule ".vim/plugged/gocode"]
+	path = .vim/plugged/gocode
+	url = https://github.com/nsf/gocode.git
+[submodule ".vim/plugged/vim-fireplace"]
+	path = .vim/plugged/vim-fireplace
+	url = https://github.com/tpope/vim-fireplace.git
+[submodule ".vim/plugged/vim-go"]
+	path = .vim/plugged/vim-go
+	url = https://github.com/fatih/vim-go.git
+[submodule ".vim/plugged/vim-github-dashboard"]
+	path = .vim/plugged/vim-github-dashboard
+	url = https://github.com/junegunn/vim-github-dashboard.git
+[submodule ".vim/plugged/auto-pairs"]
+	path = .vim/plugged/auto-pairs
+	url = https://github.com/jiangmiao/auto-pairs.git
+[submodule ".vim/plugged/ultisnips"]
+	path = .vim/plugged/ultisnips
+	url = https://github.com/SirVer/ultisnips.git
+[submodule ".vim/plugged/coc.nvim"]
+	path = .vim/plugged/coc.nvim
+	url = https://github.com/neoclide/coc.nvim.git
+[submodule ".vim/plugged/vim-rainbow"]
+	path = .vim/plugged/vim-rainbow
+	url = https://github.com/frazrepo/vim-rainbow.git
+[submodule ".vim/plugged/vim-snippets"]
+	path = .vim/plugged/vim-snippets
+	url = https://github.com/honza/vim-snippets.git
+[submodule ".vim/plugged/nerdtree"]
+	path = .vim/plugged/nerdtree
+	url = https://github.com/scrooloose/nerdtree.git
+[submodule ".vim/plugged/vim-easy-align"]
+	path = .vim/plugged/vim-easy-align
+	url = https://github.com/junegunn/vim-easy-align.git
+[submodule ".vim/bundle/vim-hybrid-material"]
+	path = .vim/bundle/vim-hybrid-material
+	url = https://github.com/kristijanhusak/vim-hybrid-material
+[submodule ".vim/bundle/vim-airline"]
+	path = .vim/bundle/vim-airline
+	url = https://github.com/vim-airline/vim-airline
+[submodule ".vim/bundle/vim-gas"]
+	path = .vim/bundle/vim-gas
+	url = https://github.com/Shirk/vim-gas
