@@ -168,3 +168,4 @@ source ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighti
 ZSH_HIGHLIGHT_STYLES[path]='fg=cyan'
 ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=red'
 alias dotfiles_conf=git --git-dir=/home/shernandiu/.cfg/ --work-tree=/home/shernandiu
+complete -F _complete_alias dotfiles_conf
