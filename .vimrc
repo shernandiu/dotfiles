@@ -26,7 +26,15 @@ let g:rainbow_active = 1
 let g:enable_bold_font = 1
 let g:enable_italic_font = 1
 let g:material_theme_style = 'darker'
+set termguicolors
+let g:terminal_ansi_colors=[
+  \'#000000','#f73a50','#86e373','#f8c057',
+  \'#3e79f7','#af3bfd','#1bbeff','#ffffff',
+  \'#777f9b','#ff5370','#c3e88d','#ffcb6b',
+  \'#82aaff','#c792ea','#89ddff','#ffffff']
 
+highlight Terminal guibg='#282828'
+highlight Terminal guifg='#ebdbb2'
 
 if (has("nvim"))
   "For Neovim 0.1.3 and 0.1.4 < https://github.com/neovim/neovim/pull/2198 >

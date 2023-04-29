@@ -16,6 +16,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 ZSH_THEME="mytheme"
+# ZSH_THEME="agnoster"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -86,6 +87,7 @@ plugins=(git
 	rust
 	# git-prompt	
 	#zsh-syntax-highlighting
+	conda-zsh-completion
  dirhistory)
 
 source $ZSH/oh-my-zsh.sh
@@ -123,9 +125,10 @@ alias bye="wsl.exe --shutdown"
 
 export DISPLAY="$(grep nameserver /etc/resolv.conf | sed 's/nameserver //'):0"
 
-ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(expand-or-complete bracketed-paste accept-line push-line-or-edit buffer-empty)
+# ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(expand-or-complete bracketed-paste accept-line push-line-or-edit buffer-empty)
+ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(del-prompt-accept-line)
 ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd history completion)
-bindkey -M main "^M" accept-line
+# bindkey -M main "^M" accept-line
 
 
 # export MANPAGER="sh -c 'col -bx | batcat -l man -p'"
@@ -167,5 +170,26 @@ source ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighti
 
 ZSH_HIGHLIGHT_STYLES[path]='fg=cyan'
 ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=red'
-alias dotfiles_conf=git --git-dir=$HOME/.cfg/ --work-tree=$HOME
+alias dotfiles_conf="git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
 complete -F _complete_alias dotfiles_conf
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+conda(){
+	__conda_setup="$('/home/shernandiu/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+	if [ $? -eq 0 ]; then
+    	eval "$__conda_setup"
+	else
+    	if [ -f "/home/shernandiu/anaconda3/etc/profile.d/conda.sh" ]; then
+        	. "/home/shernandiu/anaconda3/etc/profile.d/conda.sh"
+    	else
+        	export PATH="/home/shernandiu/anaconda3/bin:$PATH"
+    	fi
+	fi
+	unset __conda_setup
+
+	if [[ $# -gt 0 ]]; then
+		conda $@
+	fi
+}
+#<<< conda initialize <<<

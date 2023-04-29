@@ -32,12 +32,13 @@ esac
 # rendering default background/foreground.
 prompt_segment() {
   local bg fg
-  [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
-  [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
-  if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
-    [[ $RIGHT -eq 0 ]] && echo -n "%{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} " || echo -n " %{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
+  [[ -n $1 ]] && bg="%K{$1}" || bg="%k"   # set backgroung
+  [[ -n $2 ]] && fg="%F{$2}" || fg="%f"   # set foreground
+  if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then 
+    [[ $RIGHT -eq 1 ]] && echo -n " "
+    echo -n "%{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
   else
-    [[ -n $3 && $RIGHT -eq 1 ]] && echo -n "%{%F{$1}%}$SEGMENT_END_RIGHT"
+    [[ -n $3 && $RIGHT -eq 1 && $1 != 'NONE' ]] && echo -n "%{%F{$1}%}$SEGMENT_END_RIGHT"
     echo -n "%{$bg%}%{$fg%} "
   fi
   CURRENT_BG=$1
@@ -220,7 +221,7 @@ prompt_aws() {
 }
 
 prompt_time() {
-  prompt_segment 15 black "%D{%H:%M:%S} \uf017"
+  prompt_segment $1 $2 "%D{%H:%M:%S} \uf017"
 }
 
 get_os(){
@@ -275,32 +276,38 @@ prompt_os(){
 # bindkey | grep '\^M'
 # "^M" zle accept-line
 
-del-prompt-accept-line() {
-    zle accept-line
-    
-    local OLD_PROMPT="$PROMPT"
-    local OLD_RPROMPT="$RPROMPT"
-    # echo "$RETVAL"
-    [[ $1 -ne 0 ]] && PROMPT="%{%F{6}%}❯%f " || PROMPT="%{%F{1}%}❯%f "
-    # echo
-    # RPROMPT=${RPROMPT//\%K//\%P}
-    # echo $RPROMPT
-    # RPROMPT=$(sed 's/F\{*zz}//g'<<<$RPROMPT)
-    # echo $RPROMPT
-    # RPROMPT=${RPROMPT//\%P//\%F}
-    # echo $RPROMPT
-    zle reset-prompt
-    PROMPT="$OLD_PROMPT"
-    RPROMPT="$OLD_RPROMPT"
-}
+# del-prompt-accept-line() {
+#     local OLD_PROMPT="$PROMPT"
+#     # local OLD_RPROMPT="$RPROMPT"
+#     # echo "$RETVAL"
+#     [[ $RETVAL -ne 0 ]] && PROMPT=" %{%F{6}%}%~❯%f " || PROMPT=" %{%F{1}%}%~❯%f "
+#     # echo
+#     # RPROMPT=${RPROMPT//\%K//\%P}
+#     # echo $RPROMPT
+#     # RPROMPT=$(sed 's/F\{*zz}//g'<<<$RPROMPT)
+#     # echo $RPROMPT
+#     # RPROMPT=${RPROMPT//\%P//\%F}
+#     # echo $RPROMPT
+#     zle reset-prompt
+#     PROMPT="$OLD_PROMPT"
+#     # RPROMPT="$OLD_RPROMPT"
+#     zle accept-line
+# }
 
-zle -N del-prompt-accept-line 
-bindkey "^M" del-prompt-accept-line  
+# zle -N del-prompt-accept-line 
+# bindkey "^M" del-prompt-accept-line  
 
 # Print segment if current shell process is under other shell
 prompt_original_shell() {
   if [[ $(ps -p $PPID -o comm) != *"Relay("* ]]; then
     prompt_segment 3 8 ""
+  fi
+}
+
+
+prompt_conda() {
+  if [[ -n $CONDA_DEFAULT_ENV ]]; then
+    prompt_segment 77 white "🐍 $CONDA_DEFAULT_ENV"
   fi
 }
 
@@ -315,6 +322,7 @@ build_prompt() {
   prompt_status
   prompt_virtualenv
   prompt_aws
+  prompt_conda
   prompt_dir
   prompt_git
   prompt_bzr
@@ -325,6 +333,8 @@ build_prompt() {
     echo -n "\n%{%F{6}%}❯%f "
   fi
   echo -n "%E"
+
+  echo -n $RETVAL > /tmp/RETVAL   # export RETVAL
 }
 
 
@@ -335,7 +345,7 @@ build_Rprompt() {
   # [[ ${#${PWD##/home/shernandi}} -gt 20 ]] && NUMBER_LINES_DOWN=1||NUMBER_LINES_DOWN=0
 
   # [[ $NUMBER_LINES_DOWN -gt 0 ]] && echotc UP $NUMBER_LINES_DOWN
-  prompt_time
+  prompt_time 15 black
   # prompt_segment  green white '%d'
   # prompt_segment  magenta white $PWD
 
@@ -345,8 +355,47 @@ build_Rprompt() {
 # setopt PROMPT_SUBST
 
 
+build_old_prompt(){
+  local ok
+  local directory='%~'
+  [[ $RETVAL -ne 0 ]] && ok=1 || ok=6
+  [[ $PWD == "/mnt/c" || $PWD == "/mnt/c/"* ]] && directory=${PWD/\/mnt\/c/C:}
+  prompt_segment nonw $ok "$directory ❯ "  
+  echo -n "%E%f%k"
+}
+
+build_old_rprompt(){
+  RIGHT=1
+  CURRENT_BG='NONE'
+  prompt_time NONE white
+  echo -n ' %f%k'
+}
+
+del-prompt-accept-line(){
+  # actualizar si no hat nada escrito
+  # NO SE SI ME GUSTA
+  if [[ ! -n $BUFFER ]]; then   
+    zle reset-prompt
+    return
+  fi
+
+  OLD_PROMPT="$PROMPT"
+  OLD_RPROMPT="$RPROMPT"
+  RETVAL=$(cat /tmp/RETVAL)
+  PROMPT="%{%f%b%k%}$(build_old_prompt)" 
+  RPROMPT="%{%f%b%k%}$(build_old_rprompt)" 
+  zle reset-prompt
+  PROMPT="$OLD_PROMPT"
+  RPROMPT="$OLD_RPROMPT"
+  zle accept-line
+}
+
 BUILD_PROMPT="%{%f%b%k%}$(build_prompt)"
 BUILD_RPROMPT="%{%f%b%k%}$(build_Rprompt)"
 
 RPROMPT='%{%f%b%k%}$(build_Rprompt)'  
 PROMPT='%{%f%b%k%}$(build_prompt) '
+
+# change prompt on enter
+zle -N del-prompt-accept-line
+bindkey -M main "^M" del-prompt-accept-line
