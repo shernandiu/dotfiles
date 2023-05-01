@@ -299,8 +299,13 @@ prompt_os(){
 
 # Print segment if current shell process is under other shell
 prompt_original_shell() {
-  if [[ $(ps -p $PPID -o comm) != *"Relay("* ]]; then
-    prompt_segment 3 8 ""
+  if [ -n "$SSH_CLIENT" ]; then
+    prompt_segment 22 254 "%B$USER" 
+    prompt_segment 34 254 "$HOST%b" 
+  fi
+  if [[ ! $(ps -p $PPID -o comm) =~ "(Relay)|(sshd)" ]]; then
+  # elif [[ $(ps -p $PPID -o comm) =~ "sh" ]]; then
+    prompt_segment 3 236 ""
   fi
 }
 

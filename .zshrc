@@ -123,7 +123,7 @@ alias bat="batcat"
 alias cd..="cd .."
 alias bye="wsl.exe --shutdown"
 
-export DISPLAY="$(grep nameserver /etc/resolv.conf | sed 's/nameserver //'):0"
+[[ -n $WSL_DISTRO_NAME ]] && export DISPLAY="$(grep nameserver /etc/resolv.conf | sed 's/nameserver //'):0"
 
 # ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(expand-or-complete bracketed-paste accept-line push-line-or-edit buffer-empty)
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(del-prompt-accept-line)
