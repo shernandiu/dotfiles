@@ -122,6 +122,7 @@ alias exp="explorer.exe"
 alias bat="batcat"
 alias cd..="cd .."
 alias bye="wsl.exe --shutdown"
+alias cat="batcat --paging='never' --style='plain'"
 
 [[ -n $WSL_DISTRO_NAME ]] && export DISPLAY="$(grep nameserver /etc/resolv.conf | sed 's/nameserver //'):0"
 
@@ -132,11 +133,13 @@ ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd history completion)
 
 
 # export MANPAGER="sh -c 'col -bx | batcat -l man -p'"
-compdef _man batman
-alias man=batman
+if [[ $(which batman) ]]; then
+	compdef _man batman
+	alias man=batman
 
-autoload -U compinit
-compinit -i
+	autoload -U compinit
+	compinit -i
+fi
 
 
 mkex(){
@@ -193,3 +196,4 @@ conda(){
 	fi
 }
 #<<< conda initialize <<<
+alias fuck="sudo !!"

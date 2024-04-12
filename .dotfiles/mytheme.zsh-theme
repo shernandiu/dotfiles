@@ -11,7 +11,7 @@ esac
 # Special Powerline characters
 
 () {
-  local LC_ALL="" LC_CTYPE="en_US.UTF-8"
+  local LC_ALL="" LC_CTYPE="c.UTF-8"
   # NOTE: This segment separator character is correct.  In 2012, Powerline changed
   # the code points they use for their special characters. This is the new code point.
   # If this is not working for you, you probably have an old version of the
@@ -37,12 +37,20 @@ prompt_segment() {
   if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then 
     [[ $RIGHT -eq 1 ]] && echo -n " "
     echo -n "%{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
+    PROMPT_WIDTH=$(( PROMPT_WIDTH + 2 ))
   else
     [[ -n $3 && $RIGHT -eq 1 && $1 != 'NONE' ]] && echo -n "%{%F{$1}%}$SEGMENT_END_RIGHT"
     echo -n "%{$bg%}%{$fg%} "
+    PROMPT_WIDTH=$(( PROMPT_WIDTH + 1 ))
   fi
   CURRENT_BG=$1
-  if [[ -n $3 ]] && echo -n $3
+  if [[ -n $3 ]]; then
+    echo -n $3
+    printed=${3//\%?}
+    PROMPT_WIDTH=$(( PROMPT_WIDTH + $(echo -n $printed|wc -m) ))
+    # PROMPT_WIDTH=$(( PROMPT_WIDTH + $(echo -n $printed | grep -Po -c "[\x{1f300}-\x{1f5ff}\x{1f900}-\x{1f9ff}\x{1f600}-\x{1f64f}\x{1f680}-\x{1f6ff}\x{2600}-\x{26ff}\x{2700}-\x{27bf}\x{1f1e6}-\x{1f1ff}\x{1f191}-\x{1f251}\x{1f004}\x{1f0cf}\x{1f170}-\x{1f171}\x{1f17e}-\x{1f17f}\x{1f18e}\x{3030}\x{2b50}\x{2b55}\x{2934}-\x{2935}\x{2b05}-\x{2b07}\x{2b1b}-\x{2b1c}\x{3297}\x{3299}\x{303d}\x{00a9}\x{00ae}\x{2122}\x{23f3}\x{24c2}\x{23e9}-\x{23ef}\x{25b6}\x{23f8}-\x{23fa}]") ))
+
+  fi
 }
 
 # End the prompt, closing any open segments
@@ -53,6 +61,7 @@ prompt_end() {
     echo -n "%{%k%}"
   fi
   echo -n "%{%f%}"
+  PROMPT_WIDTH=$((PROMPT_WIDTH+3))
   CURRENT_BG='NONE'
 }
 
@@ -78,15 +87,17 @@ prompt_git() {
     PL_BRANCH_CHAR=$'\uf418'         # 
   }
   local ref dirty mode repo_path
-
-   if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]]; then
+  local bg fg
+  if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]]; then
     repo_path=$(git rev-parse --git-dir 2>/dev/null)
     dirty=$(parse_git_dirty)
     ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git rev-parse --short HEAD 2> /dev/null)"
     if [[ -n $dirty ]]; then
-      prompt_segment yellow black
+      bg=yellow 
+      fg=black
     else
-      prompt_segment green $CURRENT_FG
+      bg=green 
+      fg=$CURRENT_FG
     fi  
 
     if [[ -e "${repo_path}/BISECT_LOG" ]]; then
@@ -108,7 +119,7 @@ prompt_git() {
     zstyle ':vcs_info:*' formats ' %u%c'
     zstyle ':vcs_info:*' actionformats ' %u%c'
     vcs_info
-    echo -n "${${ref:gs/%/%%}/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode}"
+    prompt_segment $bg $fg "${${ref:gs/%/%%}/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode}"
   fi
 }
 
@@ -178,16 +189,18 @@ prompt_hg() {
 # Dir: current working directory
 prompt_dir() {
   local ok
-  local directory='%~'
+  local directory="${PWD/#$HOME/~}"
   [[ $RETVAL -ne 0 ]] && ok=1 || ok=6
   [[ $PWD == "/mnt/c" || $PWD == "/mnt/c/"* ]] && directory=${PWD/\/mnt\/c/C:}
   prompt_segment $ok 15 $directory
 }
 
 # Virtualenv: current working virtualenv
+export VIRTUAL_ENV_DISABLE_PROMPT=1
 prompt_virtualenv() {
-  if [[ -n "$VIRTUAL_ENV" && -n "$VIRTUAL_ENV_DISABLE_PROMPT" ]]; then
-    prompt_segment blue black "(${VIRTUAL_ENV:t:gs/%/%%})"
+  # if [[ -n "$VIRTUAL_ENV" && -n "$VIRTUAL_ENV_DISABLE_PROMPT" ]]; then
+  if [[ -n "$VIRTUAL_ENV" ]]; then
+    prompt_segment blue black "\ue73c ${VIRTUAL_ENV:t:gs/%/%%}"
   fi
 }
 
@@ -225,6 +238,10 @@ prompt_time() {
 }
 
 get_os(){
+  if [[ $(uname -s) == 'Darwin' ]]; then
+      CUR_OS='\uf302'
+      return
+  fi
   if [[ -f /etc/os-release ]]; then
     . /etc/os-release
 
@@ -273,29 +290,6 @@ prompt_os(){
   prompt_segment 15 black "$os "
 }
 
-# bindkey | grep '\^M'
-# "^M" zle accept-line
-
-# del-prompt-accept-line() {
-#     local OLD_PROMPT="$PROMPT"
-#     # local OLD_RPROMPT="$RPROMPT"
-#     # echo "$RETVAL"
-#     [[ $RETVAL -ne 0 ]] && PROMPT=" %{%F{6}%}%~❯%f " || PROMPT=" %{%F{1}%}%~❯%f "
-#     # echo
-#     # RPROMPT=${RPROMPT//\%K//\%P}
-#     # echo $RPROMPT
-#     # RPROMPT=$(sed 's/F\{*zz}//g'<<<$RPROMPT)
-#     # echo $RPROMPT
-#     # RPROMPT=${RPROMPT//\%P//\%F}
-#     # echo $RPROMPT
-#     zle reset-prompt
-#     PROMPT="$OLD_PROMPT"
-#     # RPROMPT="$OLD_RPROMPT"
-#     zle accept-line
-# }
-
-# zle -N del-prompt-accept-line 
-# bindkey "^M" del-prompt-accept-line  
 
 # Print segment if current shell process is under other shell
 prompt_original_shell() {
@@ -303,7 +297,7 @@ prompt_original_shell() {
     prompt_segment 22 254 "%B$USER" 
     prompt_segment 34 254 "$HOST%b" 
   fi
-  if [[ ! $(ps -p $PPID -o comm) =~ "(Relay)|(sshd)" ]]; then
+  if [[ ! $(ps -p $PPID -o comm) =~ "(Relay)|(sshd)|(login)" ]]; then
   # elif [[ $(ps -p $PPID -o comm) =~ "sh" ]]; then
     prompt_segment 3 236 ""
   fi
@@ -316,11 +310,13 @@ prompt_conda() {
   fi
 }
 
+
 ## Main prompt
 build_prompt() {
   RETVAL=$?
 
   RIGHT=0
+  PROMPT_WIDTH=0
 
   prompt_os
   prompt_original_shell
@@ -334,10 +330,16 @@ build_prompt() {
   prompt_hg
   prompt_end
 
-  if [[ ${#${PWD##/home/shernandi}} -gt 20 ]] ;then
-    echo -n "\n%{%F{6}%}❯%f "
+  echo -n 0 > /tmp/dontbuiltright
+  if [[ $(($PROMPT_WIDTH * 100 / $COLUMNS)) -gt 30 ]] ;then
+    RP=$(build_Rprompt)
+    local zero='%([BSUbfksu]|([FK]|){*})'
+    FOOLENGTH=${#${(S%%)RP//$~zero/}}
+    for i in {1..$(( $COLUMNS - $PROMPT_WIDTH - $FOOLENGTH - 2 ))} ; do echo -n " "; done
+    echo $RP
+    echo -n "%{%F{6}%} ❯%f "
+    echo -n 1 > /tmp/dontbuiltright
   fi
-  echo -n "%E"
 
   echo -n $RETVAL > /tmp/RETVAL   # export RETVAL
 }
@@ -346,18 +348,11 @@ build_prompt() {
 get_os
 
 build_Rprompt() {
+  [[ $(cat /tmp/dontbuiltright) -eq 1 ]] && return
   RIGHT=1
-  # [[ ${#${PWD##/home/shernandi}} -gt 20 ]] && NUMBER_LINES_DOWN=1||NUMBER_LINES_DOWN=0
-
-  # [[ $NUMBER_LINES_DOWN -gt 0 ]] && echotc UP $NUMBER_LINES_DOWN
   prompt_time 15 black
-  # prompt_segment  green white '%d'
-  # prompt_segment  magenta white $PWD
-
   echo -n ' %f%k'
-  # [[ $NUMBER_LINES_DOWN -gt 0 ]] && echotc DO $NUMBER_LINES_DOWN
 }
-# setopt PROMPT_SUBST
 
 
 build_old_prompt(){
@@ -366,7 +361,7 @@ build_old_prompt(){
   [[ $RETVAL -ne 0 ]] && ok=1 || ok=6
   [[ $PWD == "/mnt/c" || $PWD == "/mnt/c/"* ]] && directory=${PWD/\/mnt\/c/C:}
   prompt_segment nonw $ok "$directory ❯ "  
-  echo -n "%E%f%k"
+  echo -n "%f%k"
 }
 
 build_old_rprompt(){
@@ -395,11 +390,8 @@ del-prompt-accept-line(){
   zle accept-line
 }
 
-BUILD_PROMPT="%{%f%b%k%}$(build_prompt)"
-BUILD_RPROMPT="%{%f%b%k%}$(build_Rprompt)"
-
-RPROMPT='%{%f%b%k%}$(build_Rprompt)'  
 PROMPT='%{%f%b%k%}$(build_prompt) '
+RPROMPT='%{%f%b%k%}$(build_Rprompt)'  
 
 # change prompt on enter
 zle -N del-prompt-accept-line
